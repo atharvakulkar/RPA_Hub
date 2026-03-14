@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InvoiceRPA Hub — Smart Invoice Processing Dashboard</title>
+    <meta name="description" content="Enterprise-grade RPA dashboard for automated PDF invoice processing, data extraction, and structured storage." />
+
+    <!-- Tailwind CSS v3 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50:  '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 800: '#3730a3',
+                            900: '#312e81', 950: '#1e1b4b',
+                        },
+                        surface: {
+                            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0',
+                            700: '#1e293b', 800: '#0f172a', 900: '#020617',
+                        },
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+                        'fade-in': 'fadeIn .4s ease-out',
+                        'slide-up': 'slideUp .4s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn:  { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        slideUp: { '0%': { opacity: 0, transform: 'translateY(12px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+                    },
+                },
+            },
+        };
+    </script>
+
+    <!-- Google Fonts — Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 9999px; }
+
+        /* Drop zone highlight */
+        .drop-active { border-color: #818cf8 !important; background: rgba(99,102,241,.08) !important; }
+
+        /* Spinner */
+        .spinner { border: 3px solid rgba(99,102,241,.2); border-top-color: #6366f1; border-radius: 50%; width: 28px; height: 28px; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Progress bar shimmer */
+        .shimmer { background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,.3) 50%, transparent 100%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Glass card */
+        .glass { background: rgba(15,23,42,.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(99,102,241,.15); }
+
+        /* Table row hover */
+        .row-hover { transition: background .2s; }
+        .row-hover:hover { background: rgba(99,102,241,.06); }
+
+        /* Badge pulse for Processing status */
+        .badge-processing { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    </style>
+</head>
+
+<body class="min-h-screen bg-surface-900 text-slate-200 font-sans antialiased">
+
+    <!-- ===== HEADER ===== -->
+    <header class="sticky top-0 z-50 glass border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <!-- Logo / Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent">InvoiceRPA Hub</h1>
+                    <p class="text-xs text-slate-400 -mt-0.5">Smart Invoice Processing</p>
+                </div>
+            </div>
+
+            <!-- Metric Card -->
+            <div id="metric-card" class="hidden sm:flex items-center gap-3 glass rounded-xl px-5 py-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Processed Today</p>
+                    <p id="metric-count" class="text-lg font-bold text-emerald-400 leading-none">0</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
+
+        <!-- Upload Zone + Activity Log -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Upload Zone -->
+            <div class="lg:col-span-2" >
+                <div id="drop-zone"
+                     class="relative glass rounded-2xl border-2 border-dashed border-slate-600 p-10 text-center cursor-pointer transition-all duration-300 hover:border-brand-400 hover:shadow-lg hover:shadow-brand-500/5 group"
+                     onclick="document.getElementById('file-input').click()">
+
+                    <!-- Default state -->
+                    <div id="upload-idle" class="space-y-3">
+                        <div class="mx-auto w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-base font-semibold text-slate-200">Drop your invoice PDF here</p>
+                            <p class="text-sm text-slate-400 mt-1">or <span class="text-brand-400 underline underline-offset-2">click to browse</span></p>
+                        </div>
+                        <p class="text-xs text-slate-500">PDF only • Max 10 MB</p>
+                    </div>
+
+                    <!-- Processing state -->
+                    <div id="upload-processing" class="hidden space-y-4">
+                        <div class="spinner mx-auto"></div>
+                        <p class="text-base font-semibold text-brand-300">Processing invoice...</p>
+                        <div class="w-64 h-1.5 mx-auto rounded-full bg-slate-700 overflow-hidden">
+                            <div class="h-full rounded-full shimmer bg-brand-500/40"></div>
+                        </div>
+                    </div>
+
+                    <!-- Success state -->
+                    <div id="upload-success" class="hidden space-y-3">
+                        <div class="mx-auto w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <p id="success-msg" class="text-base font-semibold text-emerald-300"></p>
+                    </div>
+
+                    <!-- Error state -->
+                    <div id="upload-error" class="hidden space-y-3">
+                        <div class="mx-auto w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <p id="error-msg" class="text-base font-semibold text-red-300"></p>
+                    </div>
+
+                    <input type="file" id="file-input" accept=".pdf" class="hidden" />
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="lg:col-span-1">
+                <div class="glass rounded-2xl p-5 h-full flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Activity Log
+                        </h2>
+                        <span id="log-count" class="text-xs text-slate-500">0 events</span>
+                    </div>
+                    <div id="activity-log" class="flex-1 overflow-y-auto space-y-2 max-h-64 pr-1">
+                        <p class="text-xs text-slate-500 italic">No activity yet. Upload an invoice to get started.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Table -->
+        <section class="glass rounded-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M12 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M21.375 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125M12 13.125v-1.5m0 1.5c0 .621.504 1.125 1.125 1.125M12 13.125c0 .621-.504 1.125-1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m-3.375 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25 0h-7.5c-.621 0-1.125-.504-1.125-1.125"/>
+                    </svg>
+                    Processed Invoices
+                </h2>
+                <button id="export-btn" onclick="exportCSV()"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-colors shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                    </svg>
+                    Download CSV
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wider text-slate-400 border-b border-slate-700/50">
+                            <th class="px-6 py-3 font-medium">File Name</th>
+                            <th class="px-6 py-3 font-medium">Invoice #</th>
+                            <th class="px-6 py-3 font-medium">Date</th>
+                            <th class="px-6 py-3 font-medium">Total Amount</th>
+                            <th class="px-6 py-3 font-medium">Status</th>
+                            <th class="px-6 py-3 font-medium">Processed Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-table-body">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500 italic">
+                                No invoices processed yet
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-600">
+        InvoiceRPA Hub &copy; 2026 — Powered by AI-driven document extraction
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
