@@ -3,6 +3,7 @@
 import logging
 import os
 import tempfile
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -48,7 +49,8 @@ async def upload_invoice(file: UploadFile = File(...)):
 
     try:
         # --- Process the invoice ---
-        record = process_invoice(tmp_path, file.filename)
+        start_time = time.time()
+        record = process_invoice(tmp_path, file.filename, start_time)
         return {
             "success": True,
             "message": f"Invoice processed with status: {record.status.value}",

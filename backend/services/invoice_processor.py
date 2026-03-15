@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime
+import time
 from typing import Optional
 
 from backend.models.invoice_model import InvoiceData, InvoiceRecord, InvoiceStatus
@@ -11,7 +12,7 @@ from backend.utils.pdf_parser import extract_invoice_data
 logger = logging.getLogger("invoice_rpa")
 
 
-def process_invoice(file_path: str, file_name: str) -> InvoiceRecord:
+def process_invoice(file_path: str, file_name: str, start_time: Optional[float] = None) -> InvoiceRecord:
     """Process a single invoice PDF through the full RPA pipeline.
 
     Steps:
@@ -40,6 +41,7 @@ def process_invoice(file_path: str, file_name: str) -> InvoiceRecord:
             total_amount="N/A",
             status=InvoiceStatus.FAILED,
             processed_at=now,
+            processing_time=round(time.time() - start_time, 2) if start_time else None
         )
         csv_store.append_record(record)
         logger.error("[%s] Extraction failed — status: Failed", file_name)
@@ -59,6 +61,7 @@ def process_invoice(file_path: str, file_name: str) -> InvoiceRecord:
             total_amount=inv_amount,
             status=InvoiceStatus.DUPLICATE,
             processed_at=now,
+            processing_time=round(time.time() - start_time, 2) if start_time else None
         )
         csv_store.append_record(record)
         logger.warning("[%s] Duplicate detected (Invoice #%s) — status: Duplicate", file_name, inv_number)
@@ -72,6 +75,7 @@ def process_invoice(file_path: str, file_name: str) -> InvoiceRecord:
         total_amount=inv_amount,
         status=InvoiceStatus.PROCESSED,
         processed_at=now,
+        processing_time=round(time.time() - start_time, 2) if start_time else None
     )
     csv_store.append_record(record)
     logger.info("[%s] Successfully processed — Invoice #%s", file_name, inv_number)

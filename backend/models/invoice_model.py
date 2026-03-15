@@ -28,3 +28,4 @@ class InvoiceRecord(BaseModel):
     total_amount: str
     status: InvoiceStatus
     processed_at: str
+    processing_time: Optional[float] = None

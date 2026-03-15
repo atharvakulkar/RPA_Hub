@@ -9,7 +9,7 @@ from backend.models.invoice_model import InvoiceRecord
 
 # Resolve CSV path relative to project root
 CSV_PATH = Path(__file__).resolve().parents[2] / "processed_invoices.csv"
-FIELDNAMES = ["file_name", "invoice_number", "date", "total_amount", "status", "processed_at"]
+FIELDNAMES = ["file_name", "invoice_number", "date", "total_amount", "status", "processed_at", "processing_time"]
 
 _lock = threading.Lock()
 
