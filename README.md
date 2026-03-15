@@ -5,13 +5,15 @@ A production-grade, RPA-style invoice processing dashboard that orchestrates an 
 ## Features
 
 - **Pydantic & FastAPI Backend**: Modular enterprise structure.
+- **Automated Folder Monitoring**: Watches the `test_invoices/` folder for new PDF files and automatically triggers processing.
+- **Manual Upload Support**: Drag-and-drop interface for on-demand invoice processing.
 - **Layered Data Extraction Engine**:
   1. AI-powered multimodal extraction via **Gemini 2.0 Vision API**.
   2. Fallback text extraction via **pdfplumber**.
   3. Final regex pattern matching fallback.
 - **Duplicate Detection**: Prevents processing the same invoice number twice.
 - **Structured Storage**: Data is logged into `processed_invoices.csv` (Mock ERP Database).
-- **Enterprise Dashboard**: Built with Vanilla JS and Tailwind CSS, featuring drag-and-drop operations, real-time activity logging, dynamic tables, and CSV export.
+- **Enterprise Dashboard**: Built with Vanilla JS and Tailwind CSS, featuring real-time activity logging, dynamic tables, metrics display, and CSV export.
 
 ## Application Architecture
 
@@ -20,8 +22,10 @@ project-root
 │
 ├── backend/
 │   ├── main.py                  # FastAPI application entry point
+│   ├── folder_watcher.py        # Background folder monitoring service
 │   ├── routes/
 │   │    └── upload.py           # API endpoints (/upload, /invoices, /export)
+│   │    └── analytics.py        # API endpoints (/analytics)
 │   ├── services/
 │   │    └── invoice_processor.py# Orchestrates the RPA extraction workflow
 │   ├── utils/
@@ -82,7 +86,7 @@ A helper script is provided to generate sample PDF invoices locally without need
 pip install reportlab
 python generate_samples.py
 ```
-This generates mock PDFs inside a `test_invoices/` directory, which you can drag and drop into the dashboard.
+This generates mock PDFs inside a `test_invoices/` directory. The application automatically monitors this folder and processes any new PDF files placed there. You can also manually upload files via the dashboard's drag-and-drop interface.
 
 ## Production Considerations
 
